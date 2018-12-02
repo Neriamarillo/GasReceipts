@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Gas Receipts</string>
     <string name="action_settings">Settings</string>
+    <string name="scan_failed">Scan Failed: Found nothing to scan</string>
+    <string name="scan_results">Scan Results:</string>
+    <string name="scan_text">Scan Text</string>
+    <string name="recognizer_failed">Recognizer not set up!</string>
 </resources>

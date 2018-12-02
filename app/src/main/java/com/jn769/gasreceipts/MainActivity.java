@@ -11,11 +11,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
@@ -23,6 +24,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,32 +38,51 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "MainActivity";
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_WRITE_PERMISSION = 20;
+    private Button button_gallery;
+    private Button deleteButton;
+    private Button cancelButton;
+    private Button confirmButton;
     private File storageDir;
     private String mCurrentPhotoPath;
     private File image;
     private TextView processedText;
+    private TextView resultTextFromPicture;
     private Uri photoURI;
+    private Bitmap bitmap;
     private TextRecognizer recognizer;
     private SparseArray<TextBlock> textBlocks = null;
+    private ImageView galleryView;
+    private String resultLine = null;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.content_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         storageDir = new File(Environment.getExternalStorageDirectory(),
                 "Android/data/com.jn769.gasreceipts/files/OriginalReceipts");
         Button button = (Button) findViewById(R.id.button);
+        button_gallery = (Button) findViewById(R.id.button_gallery);
+        resultTextFromPicture = (TextView) findViewById(R.id.resultTextView);
 
-        processedText = (TextView) findViewById(R.id.results);
+//        if (resultLine != null) {
+//            resultTextFromPicture.setText(resultLine.toString());
+//        } else {
+//            resultTextFromPicture.setText("No information found! Feelsbadman");
+//        }
+
+
         recognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        button_gallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadImage();
+            }
+        });
+
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -81,6 +109,22 @@ public class MainActivity extends AppCompatActivity {
 //                        .setAction("Action", null).show();
 //            }
 //        });
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (resultLine != null) {
+            resultTextFromPicture.setText(resultLine);
+        } else {
+            resultTextFromPicture.setText("No information found! Feelsbadman");
+        }
     }
 
     // Request android permission, then take picture if passed
@@ -102,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Options menu (not being used currently)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -109,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // // Options menu actions (not being used currently)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -151,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Create image file name
     private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         Log.i(LOG_TAG, "File name:" + imageFileName);
         Log.i(LOG_TAG, String.valueOf(storageDir.exists()));
@@ -169,9 +215,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            galleryAddPic();
             try {
-                Bitmap bitmap = decodeBitmapUri(this, photoURI);
+                setContentView(R.layout.ocr_result);
+
+                processedText = (TextView) findViewById(R.id.results);
+                confirmButton = (Button) findViewById(R.id.confirm_button);
+                bitmap = decodeBitmapUri(this, photoURI);
+                galleryAddPic();
                 Log.i(LOG_TAG, String.valueOf(recognizer.isOperational()));
                 if (recognizer.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
@@ -182,31 +232,69 @@ public class MainActivity extends AppCompatActivity {
                     for (int index = 0; index < textBlocks.size(); index++) {
                         //extract scanned text blocks here
                         TextBlock tBlock = textBlocks.valueAt(index);
-                        blocks = blocks + tBlock.getValue() + "\n" + "\n";
+//                        blocks = blocks + tBlock.getValue() + "\n" + "\n";
                         for (Text line : tBlock.getComponents()) {
                             //extract scanned text lines here
-                            lines = lines + line.getValue() + "\n";
+//                            lines = lines + line.getValue() + "\n";
                             for (Text element : line.getComponents()) {
                                 //extract scanned text words here
-                                words = words + element.getValue() + ", ";
+//                                if (line.getComponents().contains("USD$".toLowerCase()) ||
+//                                        (line.getComponents().contains("Total".toLowerCase()))) {
+//                                    processedText.setText("Total Amount: "
+//                                            + tBlock.getComponents().get(index).getComponents().toString()
+//                                            + '\n');
+//                                }
+//                                words = words + element.getValue() + ", ";
+//                                if (words.contains("Total".toLowerCase()) ||
+//                                        (words.contains("Amount".toLowerCase()))) {
+//                                    processedText.setText("Amount: " + words);
+//                                }
+//                                if (words.toUpperCase().startsWith("USD".toUpperCase()) ||
+//                                        (words.toUpperCase().contains("Total".toUpperCase()) ||
+//                                                words.toUpperCase().contains("Total Amount".toUpperCase()))) {
+////                                    processedText.setText("Total Amount: "
+////                                            + words.toUpperCase().matches("USD".toUpperCase())
+////                                            + element.getValue() + '\n');
+//                                    processedText.setText("Total Amount: "
+//                                            + line.getValue()
+//                                            + lines.toUpperCase().startsWith("USD")
+//                                            + '\n');
+//                                }
+
+                                if (line.getValue().toUpperCase().contains("USD".toUpperCase())) {
+                                    processedText.setText("Total Amount: "
+                                            + line.getValue()
+                                            + '\n'
+                                            + '\n');
+                                    resultLine = line.getValue().toString();
+                                }
                             }
                         }
                     }
                     if (textBlocks.size() == 0) {
-                        processedText.setText("Scan Failed: Found nothing to scan");
+                        processedText.setText(getString(R.string.scan_failed));
                     } else {
-                        processedText.setText(processedText.getText() + "Blocks: " + "\n");
-                        processedText.setText(processedText.getText() + blocks + "\n");
-                        processedText.setText(processedText.getText() + "---------" + "\n");
-                        processedText.setText(processedText.getText() + "Lines: " + "\n");
-                        processedText.setText(processedText.getText() + lines + "\n");
-                        processedText.setText(processedText.getText() + "---------" + "\n");
+//                        processedText.setText(processedText.getText() + "Blocks: " + "\n");
+//                        processedText.setText(processedText.getText() + blocks + "\n");
+//                        processedText.setText(processedText.getText() + "---------" + "\n");
+//                        processedText.setText(processedText.getText() + "Lines: " + "\n");
+//                        processedText.setText(processedText.getText() + lines + "\n");
+//                        processedText.setText(processedText.getText() + "---------" + "\n");
 //                        processedText.setText(processedText.getText() + "Words: " + "\n");
 //                        processedText.setText(processedText.getText() + words + "\n");
 //                        processedText.setText(processedText.getText() + "---------" + "\n");
+                        confirmButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                setContentView(R.layout.activity_main);
+
+                                recreate();
+//                                processedText.setText("Total Amount of scanned receipt: " + resultLine + '\n');
+                            }
+                        });
                     }
                 } else {
-                    processedText.setText("Recognizer not set up!");
+                    processedText.setText(getString(R.string.recognizer_failed));
                 }
             } catch (Exception e) {
                 Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT)
@@ -242,5 +330,40 @@ public class MainActivity extends AppCompatActivity {
         return BitmapFactory.decodeStream(ctx.getContentResolver()
                 .openInputStream(uri), null, bmOptions);
     }
+
+    // Loads current image in a new view
+    private void loadImage() {
+        setContentView(R.layout.gallery_view);
+        Bitmap galleryBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
+        ImageView galleryView = (ImageView) findViewById(R.id.imgGalleryImage);
+        galleryView.setImageBitmap(galleryBitmap);
+        deleteButton = (Button) findViewById(R.id.delete_image);
+        cancelButton = (Button) findViewById(R.id.cancel_button);
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deleteImage();
+            }
+        });
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setContentView(R.layout.activity_main);
+                recreate();
+            }
+        });
+
+
+    }
+
+    private void deleteImage() {
+        File file = new File(mCurrentPhotoPath);
+        file.delete();
+        this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mCurrentPhotoPath))));
+        recreate();
+    }
+
 
 }
