@@ -60,7 +60,10 @@ public class MainActivity extends AppCompatActivity {
     private SparseArray<TextBlock> textBlocks = null;
     private ImageView galleryView;
     private String resultLine = null;
-
+    private TextView processedText2;
+    private TextView processedText3;
+    private TextView processedText4;
+    private TextView processedText5;
 
 
     @Override
@@ -73,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         storageDir = new File(Environment.getExternalStorageDirectory(),
                 "Android/data/com.jn769.gasreceipts/files/OriginalReceipts");
         Button button = (Button) findViewById(R.id.button);
-        button_gallery = (Button) findViewById(R.id.button_gallery);
+//        button_gallery = (Button) findViewById(R.id.button_gallery);
         resultTextFromPicture = (TextView) findViewById(R.id.resultTextView);
 
 //        if (resultLine != null) {
@@ -94,12 +97,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        button_gallery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loadImage();
-            }
-        });
+//        button_gallery.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                loadImage();
+//            }
+//        });
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -122,8 +125,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         if (resultLine != null) {
             resultTextFromPicture.setText(resultLine);
-        } else {
-            resultTextFromPicture.setText("No information found! Feelsbadman");
         }
     }
 
@@ -219,7 +220,12 @@ public class MainActivity extends AppCompatActivity {
                 setContentView(R.layout.ocr_result);
 
                 processedText = (TextView) findViewById(R.id.results);
+                processedText2 = (TextView) findViewById(R.id.results2);
+                processedText3 = (TextView) findViewById(R.id.results3);
+                processedText4 = (TextView) findViewById(R.id.results4);
+                processedText5 = (TextView) findViewById(R.id.results5);
                 confirmButton = (Button) findViewById(R.id.confirm_button);
+                button_gallery = (Button) findViewById(R.id.button_gallery);
                 bitmap = decodeBitmapUri(this, photoURI);
                 galleryAddPic();
                 Log.i(LOG_TAG, String.valueOf(recognizer.isOperational()));
@@ -232,41 +238,29 @@ public class MainActivity extends AppCompatActivity {
                     for (int index = 0; index < textBlocks.size(); index++) {
                         //extract scanned text blocks here
                         TextBlock tBlock = textBlocks.valueAt(index);
-//                        blocks = blocks + tBlock.getValue() + "\n" + "\n";
                         for (Text line : tBlock.getComponents()) {
-                            //extract scanned text lines here
-//                            lines = lines + line.getValue() + "\n";
                             for (Text element : line.getComponents()) {
-                                //extract scanned text words here
-//                                if (line.getComponents().contains("USD$".toLowerCase()) ||
-//                                        (line.getComponents().contains("Total".toLowerCase()))) {
-//                                    processedText.setText("Total Amount: "
-//                                            + tBlock.getComponents().get(index).getComponents().toString()
-//                                            + '\n');
-//                                }
-//                                words = words + element.getValue() + ", ";
-//                                if (words.contains("Total".toLowerCase()) ||
-//                                        (words.contains("Amount".toLowerCase()))) {
-//                                    processedText.setText("Amount: " + words);
-//                                }
-//                                if (words.toUpperCase().startsWith("USD".toUpperCase()) ||
-//                                        (words.toUpperCase().contains("Total".toUpperCase()) ||
-//                                                words.toUpperCase().contains("Total Amount".toUpperCase()))) {
-////                                    processedText.setText("Total Amount: "
-////                                            + words.toUpperCase().matches("USD".toUpperCase())
-////                                            + element.getValue() + '\n');
-//                                    processedText.setText("Total Amount: "
-//                                            + line.getValue()
-//                                            + lines.toUpperCase().startsWith("USD")
-//                                            + '\n');
-//                                }
 
-                                if (line.getValue().toUpperCase().contains("USD".toUpperCase())) {
-                                    processedText.setText("Total Amount: "
-                                            + line.getValue()
-                                            + '\n'
-                                            + '\n');
-                                    resultLine = line.getValue().toString();
+                                if (line.getValue().toUpperCase().contains("USD".toUpperCase()) ||
+                                        line.getValue().toUpperCase().matches("TOTAL".toUpperCase())) {
+                                    processedText.setText(String.format("Total Amount: %s\n\n", line.getValue()));
+                                    resultLine = line.getValue();
+                                }
+                                if (line.getValue().toUpperCase().contains("VISA".toUpperCase())) {
+                                    processedText2.setText(String.format("Paid with: %s\n\n", line.getValue()));
+                                    resultLine = line.getValue();
+                                }
+                                if (line.getValue().toUpperCase().contains("TIP".toUpperCase())) {
+                                    processedText3.setText(String.format("Tip: %s\n\n", line.getValue()));
+                                    resultLine = line.getValue();
+                                }
+                                if (line.getValue().toUpperCase().contains("AMOUNT".toUpperCase())) {
+                                    processedText4.setText(String.format("Amount: %s\n\n", line.getValue()));
+                                    resultLine = line.getValue();
+                                }
+                                if (line.getValue().toUpperCase().contains("SUBTOTAL".toUpperCase())) {
+                                    processedText5.setText(String.format("Subtotal: %s\n\n", line.getValue()));
+                                    resultLine = line.getValue();
                                 }
                             }
                         }
@@ -287,9 +281,15 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(View view) {
                                 setContentView(R.layout.activity_main);
-
                                 recreate();
 //                                processedText.setText("Total Amount of scanned receipt: " + resultLine + '\n');
+                            }
+                        });
+
+                        button_gallery.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                loadImage();
                             }
                         });
                     }
@@ -355,7 +355,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
     }
 
     private void deleteImage() {
@@ -365,5 +364,34 @@ public class MainActivity extends AppCompatActivity {
         recreate();
     }
 
+
+    // TODO: Line 240
+
+//    blocks = blocks + tBlock.getValue() + "\n" + "\n";
+    //extract scanned text lines here
+//                            lines = lines + line.getValue() + "\n";
+    //extract scanned text words here
+//                                if (line.getComponents().contains("USD$".toLowerCase()) ||
+//                                        (line.getComponents().contains("Total".toLowerCase()))) {
+//                                    processedText.setText("Total Amount: "
+//                                            + tBlock.getComponents().get(index).getComponents().toString()
+//                                            + '\n');
+//                                }
+//                                words = words + element.getValue() + ", ";
+//                                if (words.contains("Total".toLowerCase()) ||
+//                                        (words.contains("Amount".toLowerCase()))) {
+//                                    processedText.setText("Amount: " + words);
+//                                }
+//                                if (words.toUpperCase().startsWith("USD".toUpperCase()) ||
+//                                        (words.toUpperCase().contains("Total".toUpperCase()) ||
+//                                                words.toUpperCase().contains("Total Amount".toUpperCase()))) {
+////                                    processedText.setText("Total Amount: "
+////                                            + words.toUpperCase().matches("USD".toUpperCase())
+////                                            + element.getValue() + '\n');
+//                                    processedText.setText("Total Amount: "
+//                                            + line.getValue()
+//                                            + lines.toUpperCase().startsWith("USD")
+//                                            + '\n');
+//                                }
 
 }

@@ -5,4 +5,6 @@
     <string name="scan_results">Scan Results:</string>
     <string name="scan_text">Scan Text</string>
     <string name="recognizer_failed">Recognizer not set up!</string>
+    <string name="processing_fail">Could not detect the text!</string>
+    <string name="main_title">Scan a photo</string>
 </resources>
