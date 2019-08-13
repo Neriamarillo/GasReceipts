@@ -15,8 +15,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseArray;
@@ -79,13 +77,6 @@ public class MainActivity extends AppCompatActivity {
 //        button_gallery = (Button) findViewById(R.id.button_gallery);
         resultTextFromPicture = (TextView) findViewById(R.id.resultTextView);
 
-//        if (resultLine != null) {
-//            resultTextFromPicture.setText(resultLine.toString());
-//        } else {
-//            resultTextFromPicture.setText("No information found! Feelsbadman");
-//        }
-
-
         recognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,21 +88,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        button_gallery.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                loadImage();
-//            }
-//        });
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "LOADING CAMERA!", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
     }
 
     @Override
@@ -268,15 +244,6 @@ public class MainActivity extends AppCompatActivity {
                     if (textBlocks.size() == 0) {
                         processedText.setText(getString(R.string.scan_failed));
                     } else {
-//                        processedText.setText(processedText.getText() + "Blocks: " + "\n");
-//                        processedText.setText(processedText.getText() + blocks + "\n");
-//                        processedText.setText(processedText.getText() + "---------" + "\n");
-//                        processedText.setText(processedText.getText() + "Lines: " + "\n");
-//                        processedText.setText(processedText.getText() + lines + "\n");
-//                        processedText.setText(processedText.getText() + "---------" + "\n");
-//                        processedText.setText(processedText.getText() + "Words: " + "\n");
-//                        processedText.setText(processedText.getText() + words + "\n");
-//                        processedText.setText(processedText.getText() + "---------" + "\n");
                         confirmButton.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -363,35 +330,4 @@ public class MainActivity extends AppCompatActivity {
         this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mCurrentPhotoPath))));
         recreate();
     }
-
-
-    // TODO: Line 240
-
-//    blocks = blocks + tBlock.getValue() + "\n" + "\n";
-    //extract scanned text lines here
-//                            lines = lines + line.getValue() + "\n";
-    //extract scanned text words here
-//                                if (line.getComponents().contains("USD$".toLowerCase()) ||
-//                                        (line.getComponents().contains("Total".toLowerCase()))) {
-//                                    processedText.setText("Total Amount: "
-//                                            + tBlock.getComponents().get(index).getComponents().toString()
-//                                            + '\n');
-//                                }
-//                                words = words + element.getValue() + ", ";
-//                                if (words.contains("Total".toLowerCase()) ||
-//                                        (words.contains("Amount".toLowerCase()))) {
-//                                    processedText.setText("Amount: " + words);
-//                                }
-//                                if (words.toUpperCase().startsWith("USD".toUpperCase()) ||
-//                                        (words.toUpperCase().contains("Total".toUpperCase()) ||
-//                                                words.toUpperCase().contains("Total Amount".toUpperCase()))) {
-////                                    processedText.setText("Total Amount: "
-////                                            + words.toUpperCase().matches("USD".toUpperCase())
-////                                            + element.getValue() + '\n');
-//                                    processedText.setText("Total Amount: "
-//                                            + line.getValue()
-//                                            + lines.toUpperCase().startsWith("USD")
-//                                            + '\n');
-//                                }
-
 }
