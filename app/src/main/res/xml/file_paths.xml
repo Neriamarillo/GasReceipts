@@ -2,5 +2,5 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path
         name="original_images"
-        path="Android/data/com.jn769.gasreceipts/files/OriginalReceipts" />
+        path="Android/data/com.jn769.gasreceipts/files/Pictures" />
 </paths>

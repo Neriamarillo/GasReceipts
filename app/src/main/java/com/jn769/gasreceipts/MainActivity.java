@@ -10,12 +10,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+
 import androidx.annotation.NonNull;
+
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
@@ -48,12 +52,12 @@ public class MainActivity extends AppCompatActivity {
     private Button cancelButton;
     private Button confirmButton;
     private File storageDir;
-    private String mCurrentPhotoPath;
+    private String imageFilePath;
     private File image;
     private TextView processedText;
     private TextView resultTextFromPicture;
     private Uri photoURI;
-    private Bitmap bitmap;
+    private Bitmap imageBitmap;
     private TextRecognizer recognizer;
     private SparseArray<TextBlock> textBlocks = null;
     private ImageView galleryView;
@@ -62,20 +66,21 @@ public class MainActivity extends AppCompatActivity {
     private TextView processedText3;
     private TextView processedText4;
     private TextView processedText5;
+    private ImageView imageView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        storageDir = new File(Environment.getExternalStorageDirectory(),
-                "Android/data/com.jn769.gasreceipts/files/OriginalReceipts");
-        Button button = (Button) findViewById(R.id.button);
+        storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        Button button = findViewById(R.id.button);
 //        button_gallery = (Button) findViewById(R.id.button_gallery);
-        resultTextFromPicture = (TextView) findViewById(R.id.resultTextView);
+        resultTextFromPicture = findViewById(R.id.resultTextView);
 
         recognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         button.setOnClickListener(new View.OnClickListener() {
@@ -87,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PERMISSION);
             }
         });
+
 
     }
 
@@ -108,18 +114,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case REQUEST_WRITE_PERMISSION:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i(LOG_TAG, storageDir.getAbsolutePath());
-                    Log.i(LOG_TAG, String.valueOf(storageDir.exists()));
-                    if (!storageDir.exists()) {
-                        storageDir.mkdirs();
-                    }
-                    dispatchTakePictureIntent();
-                } else {
-                    Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+        if (requestCode == REQUEST_WRITE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i(LOG_TAG, storageDir.getAbsolutePath());
+                Log.i("RequestPermissions: Dir Exists?", String.valueOf(storageDir.exists()));
+                if (!storageDir.exists()) {
+                    storageDir.mkdirs();
                 }
+                dispatchTakePictureIntent();
+            } else {
+                Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -134,12 +139,8 @@ public class MainActivity extends AppCompatActivity {
     // // Options menu actions (not being used currently)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -152,15 +153,19 @@ public class MainActivity extends AppCompatActivity {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+//            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+
             // Create the File where the photo should go
             File photoFile = null;
             try {
                 photoFile = createImageFile();
+                Log.i("PhotoFile:", String.valueOf(photoFile));
             } catch (IOException ex) {
                 // Error occurred while creating the File
                 ex.printStackTrace();
             }
             // Continue only if the File was successfully created
+
             if (photoFile != null) {
                 photoURI = FileProvider.getUriForFile(
                         this,
@@ -176,37 +181,57 @@ public class MainActivity extends AppCompatActivity {
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        Log.i(LOG_TAG, "File name:" + imageFileName);
-        Log.i(LOG_TAG, String.valueOf(storageDir.exists()));
+//        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        Log.i(LOG_TAG, "File name: " + imageFileName);
+        assert storageDir != null;
+        Log.i("Storage Dir Exits?", String.valueOf(storageDir.exists()));
         image = File.createTempFile(
                 imageFileName,      /* prefix */
                 ".jpg",      /* suffix */
                 storageDir          /* directory */
         );
         // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
+        imageFilePath = image.getAbsolutePath();
         return image;
     }
 
     // OCR decoding process
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+
             try {
                 setContentView(R.layout.ocr_result);
 
-                processedText = (TextView) findViewById(R.id.results);
-                processedText2 = (TextView) findViewById(R.id.results2);
-                processedText3 = (TextView) findViewById(R.id.results3);
-                processedText4 = (TextView) findViewById(R.id.results4);
-                processedText5 = (TextView) findViewById(R.id.results5);
-                confirmButton = (Button) findViewById(R.id.confirm_button);
-                button_gallery = (Button) findViewById(R.id.button_gallery);
-                bitmap = decodeBitmapUri(this, photoURI);
+                processedText = findViewById(R.id.results);
+                processedText2 = findViewById(R.id.results2);
+                processedText3 = findViewById(R.id.results3);
+                processedText4 = findViewById(R.id.results4);
+                processedText5 = findViewById(R.id.results5);
+                confirmButton = findViewById(R.id.confirm_button);
+                button_gallery = findViewById(R.id.button_gallery);
+                imageBitmap = decodeBitmapUri(this, photoURI);
                 galleryAddPic();
+
+                confirmButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        setContentView(R.layout.activity_main);
+                        recreate();
+//                                processedText.setText("Total Amount of scanned receipt: " + resultLine + '\n');
+                    }
+                });
+
+                button_gallery.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        loadImage();
+                    }
+                });
                 Log.i(LOG_TAG, String.valueOf(recognizer.isOperational()));
-                if (recognizer.isOperational() && bitmap != null) {
-                    Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+                if (recognizer.isOperational() && imageBitmap != null) {
+                    Frame frame = new Frame.Builder().setBitmap(imageBitmap).build();
                     textBlocks = recognizer.detect(frame);
                     String blocks = "";
                     String lines = "";
@@ -219,7 +244,10 @@ public class MainActivity extends AppCompatActivity {
 
                                 if (line.getValue().toUpperCase().contains("USD".toUpperCase()) ||
                                         line.getValue().toUpperCase().matches("TOTAL".toUpperCase())) {
-                                    processedText.setText(String.format("Total Amount: %s\n\n", line.getValue()));
+//                                    processedText.setText(String.format("Total Amount: %s\n\n", line.getValue()));
+                                    Log.i("Line Value for Total Amount",line.getValue());
+                                    Log.i("Processed Element: ", element.getValue());
+                                    processedText.setText(String.format("Total Amount: $%s", line.getValue()));
                                     resultLine = line.getValue();
                                 }
                                 if (line.getValue().toUpperCase().contains("VISA".toUpperCase())) {
@@ -227,15 +255,15 @@ public class MainActivity extends AppCompatActivity {
                                     resultLine = line.getValue();
                                 }
                                 if (line.getValue().toUpperCase().contains("TIP".toUpperCase())) {
-                                    processedText3.setText(String.format("Tip: %s\n\n", line.getValue()));
+                                    processedText3.setText(String.format("Tip: $%s\n\n", line.getValue()));
                                     resultLine = line.getValue();
                                 }
                                 if (line.getValue().toUpperCase().contains("AMOUNT".toUpperCase())) {
-                                    processedText4.setText(String.format("Amount: %s\n\n", line.getValue()));
+                                    processedText4.setText(String.format("Amount:$@%s\n\n", line.getValue()));
                                     resultLine = line.getValue();
                                 }
                                 if (line.getValue().toUpperCase().contains("SUBTOTAL".toUpperCase())) {
-                                    processedText5.setText(String.format("Subtotal: %s\n\n", line.getValue()));
+                                    processedText5.setText(String.format("Subtotal: $%s\n\n", line.getValue()));
                                     resultLine = line.getValue();
                                 }
                             }
@@ -244,21 +272,21 @@ public class MainActivity extends AppCompatActivity {
                     if (textBlocks.size() == 0) {
                         processedText.setText(getString(R.string.scan_failed));
                     } else {
-                        confirmButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                setContentView(R.layout.activity_main);
-                                recreate();
-//                                processedText.setText("Total Amount of scanned receipt: " + resultLine + '\n');
-                            }
-                        });
-
-                        button_gallery.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                loadImage();
-                            }
-                        });
+//                        confirmButton.setOnClickListener(new View.OnClickListener() {
+//                            @Override
+//                            public void onClick(View view) {
+//                                setContentView(R.layout.activity_main);
+//                                recreate();
+////                                processedText.setText("Total Amount of scanned receipt: " + resultLine + '\n');
+//                            }
+//                        });
+//
+//                        button_gallery.setOnClickListener(new View.OnClickListener() {
+//                            @Override
+//                            public void onClick(View view) {
+//                                loadImage();
+//                            }
+//                        });
                     }
                 } else {
                     processedText.setText(getString(R.string.recognizer_failed));
@@ -269,11 +297,12 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(LOG_TAG, e.toString());
             }
         }
+
     }
 
     // Make image available to external gallery
     private void galleryAddPic() {
-        File file = new File(mCurrentPhotoPath);
+        File file = new File(imageFilePath);
         Uri contentUri = Uri.fromFile(file);
         Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, contentUri);
         mediaScanIntent.setData(contentUri);
@@ -301,11 +330,11 @@ public class MainActivity extends AppCompatActivity {
     // Loads current image in a new view
     private void loadImage() {
         setContentView(R.layout.gallery_view);
-        Bitmap galleryBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
-        ImageView galleryView = (ImageView) findViewById(R.id.imgGalleryImage);
+        Bitmap galleryBitmap = BitmapFactory.decodeFile(imageFilePath);
+        ImageView galleryView = findViewById(R.id.imgGalleryImage);
         galleryView.setImageBitmap(galleryBitmap);
-        deleteButton = (Button) findViewById(R.id.delete_image);
-        cancelButton = (Button) findViewById(R.id.cancel_button);
+        deleteButton = findViewById(R.id.delete_image);
+        cancelButton = findViewById(R.id.cancel_button);
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -325,9 +354,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteImage() {
-        File file = new File(mCurrentPhotoPath);
+        File file = new File(imageFilePath);
         file.delete();
-        this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mCurrentPhotoPath))));
+        this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(imageFilePath))));
         recreate();
     }
 }
