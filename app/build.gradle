@@ -1,10 +1,12 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 29
     defaultConfig {
         applicationId "com.jn769.gasreceipts"
-        minSdkVersion 27
+        minSdkVersion 16
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -23,10 +25,20 @@ dependencies {
     //noinspection GradleCompatible
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
-    implementation 'com.google.android.material:material:1.1.0-alpha10'
+    implementation 'com.google.android.material:material:1.1.0-beta01'
     testImplementation 'junit:junit:4.13-beta-3'
     androidTestImplementation 'androidx.test:runner:1.3.0-alpha02'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0-alpha02'
-    implementation 'com.google.android.gms:play-services-vision:18.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0-beta04'
+//    implementation 'com.google.android.gms:play-services-vision:18.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0-beta05'
+
+    implementation 'com.google.firebase:firebase-ml-vision:24.0.0'
+    implementation 'androidx.exifinterface:exifinterface:1.0.0'
+    implementation "androidx.core:core-ktx:1.1.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+apply plugin: 'com.google.gms.google-services'
+repositories {
+    mavenCentral()
 }

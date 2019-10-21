@@ -19,7 +19,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <meta-data
-            android:name="com.google.android.gms.vision.DEPENDENCIES"
+            android:name="com.google.firebase.ml.vision.DEPENDENCIES"
             android:value="ocr" />
         <activity
             android:name=".MainActivity"
